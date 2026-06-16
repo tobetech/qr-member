@@ -26,8 +26,13 @@ export default function TopupPage() {
     };
   }, []);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   async function handleCreateOrder() {
+    if (isSubmitting) return;
     if (!finalAmount || finalAmount <= 0) return;
+
+    setIsSubmitting(true);
     setStatus("creating");
     setErrorMsg("");
 
@@ -69,6 +74,8 @@ export default function TopupPage() {
     } catch (err: any) {
       setErrorMsg(err.message);
       setStatus("error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -143,7 +150,7 @@ export default function TopupPage() {
 
           <button
             onClick={handleCreateOrder}
-            disabled={!finalAmount}
+            disabled={!finalAmount || isSubmitting}
             className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-semibold text-lg active:scale-95 transition disabled:opacity-50"
           >
             สร้าง QR PromptPay
