@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 type ScanState = 'scanning' | 'processing' | 'success' | 'error'
+type FacingMode = 'environment' | 'user'
 
 interface Result {
   tx_id?: string
@@ -18,6 +19,7 @@ export default function ScanPage() {
   const supabase = createClient()
   const [state, setState] = useState<ScanState>('scanning')
   const [result, setResult] = useState<Result>({})
+  const [facingMode, setFacingMode] = useState<FacingMode>('environment')
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -25,34 +27,42 @@ export default function ScanPage() {
   const animFrameRef = useRef<number>(0)
 
   useEffect(() => {
-    startCamera()
+    if (state === 'scanning') {
+      startCamera()
+    }
     return () => stopCamera()
-  }, [])
+  }, [facingMode])
 
   async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true  // ง่ายที่สุด ไม่มี constraint เพิ่ม
-    })
-    streamRef.current = stream
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream
-      await videoRef.current.play()
-      scanningRef.current = true
-      animFrameRef.current = requestAnimationFrame(scanFrame)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: facingMode } }
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+        scanningRef.current = true
+        animFrameRef.current = requestAnimationFrame(scanFrame)
+      }
+    } catch (err: any) {
+      console.log('Camera error name:', err.name)
+      console.log('Camera error message:', err.message)
+      setResult({ error: `${err.name}: ${err.message}` })
+      setState('error')
     }
-  } catch (err: any) {
-    console.log('Camera error name:', err.name)
-    console.log('Camera error message:', err.message)
-    setResult({ error: `${err.name}: ${err.message}` })
-    setState('error')
   }
-}
 
   function stopCamera() {
     scanningRef.current = false
     cancelAnimationFrame(animFrameRef.current)
     streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+  }
+
+  function switchCamera() {
+    stopCamera()
+    setFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'))
   }
 
   async function scanFrame() {
@@ -70,9 +80,6 @@ export default function ScanPage() {
     if (!ctx) return
     ctx.drawImage(video, 0, 0)
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-
-    // ใช้ BarcodeDetector API (รองรับบน Chrome/Safari mobile)
     if ('BarcodeDetector' in window) {
       try {
         // @ts-ignore
@@ -150,7 +157,6 @@ export default function ScanPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900">
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-12 pb-4 z-10 relative">
         <button
           onClick={() => { stopCamera(); router.push('/menu') }}
@@ -161,7 +167,6 @@ export default function ScanPage() {
         <h1 className="text-white font-semibold text-lg">สแกน QR จากตู้</h1>
       </div>
 
-      {/* Camera View */}
       {state === 'scanning' && (
         <div className="flex-1 flex flex-col items-center justify-center relative">
           <video
@@ -173,26 +178,29 @@ export default function ScanPage() {
           />
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Overlay frame */}
           <div className="relative z-10 flex flex-col items-center">
             <div className="w-64 h-64 relative">
               <div className="absolute inset-0 border-2 border-white/30 rounded-2xl" />
-              {/* Corner markers */}
               <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-400 rounded-tl-lg" />
               <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-400 rounded-tr-lg" />
               <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-400 rounded-bl-lg" />
               <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-400 rounded-br-lg" />
-              {/* Scan line animation */}
               <div className="absolute left-2 right-2 h-0.5 bg-indigo-400 animate-bounce top-1/2" />
             </div>
             <p className="text-white/80 text-sm mt-6 text-center px-8">
               วาง QR Code จากตู้ไว้ในกรอบ
             </p>
+
+            <button
+              onClick={switchCamera}
+              className="mt-4 px-5 py-2 bg-white/10 text-white rounded-full text-sm flex items-center gap-2 active:scale-95 transition"
+            >
+              🔄 สวิตช์กล้อง
+            </button>
           </div>
         </div>
       )}
 
-      {/* Processing */}
       {state === 'processing' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
           <div className="w-16 h-16 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin" />
@@ -201,7 +209,6 @@ export default function ScanPage() {
         </div>
       )}
 
-      {/* Success */}
       {state === 'success' && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
           <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
@@ -236,7 +243,6 @@ export default function ScanPage() {
         </div>
       )}
 
-      {/* Error */}
       {state === 'error' && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
           <div className="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center">
