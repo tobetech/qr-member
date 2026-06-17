@@ -3,10 +3,16 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
+const PHONE_DOMAIN = '@vending.local'
+
+function phoneToEmail(phone: string) {
+  return `${phone}${PHONE_DOMAIN}`
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -16,10 +22,14 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const fakeEmail = phoneToEmail(phone)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: fakeEmail,
+      password,
+    })
 
     if (error) {
-      setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง')
+      setError('เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง')
       setLoading(false)
       return
     }
@@ -40,14 +50,15 @@ export default function LoginPage() {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
           <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            type="tel"
+            value={phone}
+            onChange={e => setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
             required
+            inputMode="numeric"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 bg-gray-50"
-            placeholder="example@email.com"
+            placeholder="0812345678"
           />
         </div>
 
@@ -58,6 +69,7 @@ export default function LoginPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 bg-gray-50"
             placeholder="••••••••"
           />
@@ -75,6 +87,14 @@ export default function LoginPage() {
           className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold text-base hover:bg-indigo-700 active:scale-95 transition disabled:opacity-50"
         >
           {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => router.push('/signup')}
+          className="w-full py-3 text-indigo-600 text-sm font-medium"
+        >
+          ยังไม่มีบัญชี? สมัครสมาชิก
         </button>
       </form>
     </div>
