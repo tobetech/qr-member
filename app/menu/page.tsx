@@ -176,15 +176,27 @@ export default function MenuPage() {
 
       <div className="flex-1 px-6 py-6 space-y-3">
         <button
-          onClick={() => router.push('/scan')}
-          className="w-full flex items-center gap-4 bg-indigo-600 text-white px-5 py-4 rounded-2xl active:scale-95 transition"
+          onClick={() => {
+            if ((profile?.balance || 0) <= 0) return
+            router.push('/scan')
+          }}
+          disabled={(profile?.balance || 0) <= 0}
+          className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition ${
+            (profile?.balance || 0) <= 0
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-indigo-600 text-white active:scale-95'
+          }`}
         >
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+            (profile?.balance || 0) <= 0 ? 'bg-gray-300' : 'bg-white/20'
+          }`}>
             📷
           </div>
           <div className="text-left">
             <p className="font-semibold text-lg">สแกน QR ซื้อสินค้า</p>
-            <p className="text-indigo-200 text-sm">เปิดกล้องสแกน QR จากตู้</p>
+            <p className={`text-sm ${(profile?.balance || 0) <= 0 ? 'text-gray-400' : 'text-indigo-200'}`}>
+              {(profile?.balance || 0) <= 0 ? 'กรุณาเติมเงินก่อนใช้งาน' : 'เปิดกล้องสแกน QR จากตู้'}
+            </p>
           </div>
         </button>
 
