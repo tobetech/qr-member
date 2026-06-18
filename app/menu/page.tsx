@@ -75,6 +75,23 @@ export default function MenuPage() {
   }, [])
 
   async function handleLogout() {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sessions/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: user.id }),
+        })
+      } catch {
+        // ถึงเรียก backend ไม่สำเร็จ ก็ยัง sign out ต่อไป ไม่บล็อกผู้ใช้
+      }
+    }
+
+    sessionStorage.removeItem('session_token')
+    sessionStorage.removeItem('user_id')
+
     await supabase.auth.signOut()
     router.push('/login')
   }
