@@ -79,14 +79,17 @@ export default function MenuPage() {
 
     if (user) {
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sessions/logout`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sessions/logout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: user.id }),
         })
-      } catch {
-        // ถึงเรียก backend ไม่สำเร็จ ก็ยัง sign out ต่อไป ไม่บล็อกผู้ใช้
+        console.log('[LOGOUT] backend response status:', res.status)
+      } catch (err) {
+        console.error('[LOGOUT] backend call failed:', err)
       }
+    } else {
+      console.log('[LOGOUT] no user found from getUser()')
     }
 
     sessionStorage.removeItem('session_token')
