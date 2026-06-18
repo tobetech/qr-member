@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-
+import { useSessionGuard } from '@/lib/hooks/useSessionGuard'
 interface Transaction {
   id: string
   tx_id: string
@@ -39,6 +39,7 @@ type Tab = 'purchase' | 'topup'
 export default function HistoryPage() {
   const router = useRouter()
   const supabase = createClient()
+  useSessionGuard();
   const [tab, setTab] = useState<Tab>('purchase')
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [topups, setTopups] = useState<TopupOrder[]>([])

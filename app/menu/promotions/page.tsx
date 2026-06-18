@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-
+import { useSessionGuard } from '@/lib/hooks/useSessionGuard'
 interface Promotion {
   id: string
   title: string
@@ -13,6 +13,7 @@ interface Promotion {
 export default function PromotionsPage() {
   const router = useRouter()
   const supabase = createClient()
+  useSessionGuard()
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [loading, setLoading] = useState(true)
 

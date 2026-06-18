@@ -2,12 +2,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { useSessionGuard } from '@/lib/hooks/useSessionGuard'
 
 const AMOUNTS = [20, 50, 100, 200, 500];
 
 export default function TopupPage() {
   const router = useRouter();
   const supabase = createClient();
+  useSessionGuard();
   const [amount, setAmount] = useState(100);
   const [custom, setCustom] = useState("");
   const [qrUrl, setQrUrl] = useState("");

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-
+import { useSessionGuard } from '@/lib/hooks/useSessionGuard'
 type ScanState = 'scanning' | 'processing' | 'success' | 'error'
 type FacingMode = 'environment' | 'user'
 
@@ -17,6 +17,7 @@ interface Result {
 export default function ScanPage() {
   const router = useRouter()
   const supabase = createClient()
+  useSessionGuard()
   const [state, setState] = useState<ScanState>('scanning')
   const [result, setResult] = useState<Result>({})
   const [facingMode, setFacingMode] = useState<FacingMode>('environment')

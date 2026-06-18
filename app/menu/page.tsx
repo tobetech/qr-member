@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-
+import { useSessionGuard } from '@/lib/hooks/useSessionGuard'
 interface Profile {
   full_name: string
   balance: number
@@ -17,8 +17,8 @@ interface Tier {
 }
 
 export default function MenuPage() {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter()  
+  useSessionGuard()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [tiers, setTiers] = useState<Tier[]>([])
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
