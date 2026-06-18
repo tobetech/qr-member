@@ -18,6 +18,7 @@ interface Tier {
 
 export default function MenuPage() {
   const router = useRouter()  
+  const supabase = createClient()
   useSessionGuard()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [tiers, setTiers] = useState<Tier[]>([])
