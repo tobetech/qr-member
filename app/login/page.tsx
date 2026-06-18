@@ -23,13 +23,44 @@ export default function LoginPage() {
     setError('')
 
     const fakeEmail = phoneToEmail(phone)
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: fakeEmail,
       password,
     })
 
-    if (error) {
+    if (authError || !data.user) {
       setError('เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง')
+      setLoading(false)
+      return
+    }
+
+    // เช็คว่ามีคนใช้งานบัญชีนี้อยู่ที่อื่นไหม
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sessions/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: data.user.id,
+          device_info: navigator.userAgent,
+        }),
+      })
+
+      const sessionData = await res.json()
+
+      if (!res.ok) {
+        // มีคนใช้งานอยู่ - sign out ออกจาก auth ด้วย ไม่ให้ login ค้างอยู่
+        await supabase.auth.signOut()
+        setError(sessionData.error || 'ไม่สามารถเข้าสู่ระบบได้')
+        setLoading(false)
+        return
+      }
+
+      // เก็บ session_token ไว้ใช้ heartbeat ต่อไป
+      sessionStorage.setItem('session_token', sessionData.session_token)
+      sessionStorage.setItem('user_id', data.user.id)
+    } catch {
+      await supabase.auth.signOut()
+      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่')
       setLoading(false)
       return
     }
