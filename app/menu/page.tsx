@@ -215,15 +215,15 @@ export default function MenuPage() {
 
         {loyaltyEnabled && (
           <button
-            disabled
-            className="w-full flex items-center gap-4 bg-white border border-gray-100 px-5 py-4 rounded-2xl shadow-sm opacity-60 cursor-not-allowed"
+            onClick={() => router.push('/menu/rewards')}
+            className="w-full flex items-center gap-4 bg-white border border-gray-100 px-5 py-4 rounded-2xl active:scale-95 transition shadow-sm"
           >
             <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center text-2xl">
               ⭐
             </div>
             <div className="text-left">
               <p className="font-semibold text-lg text-gray-900">แลกคะแนนสะสม</p>
-              <p className="text-gray-400 text-sm">เร็วๆนี้</p>
+              <p className="text-gray-400 text-sm">ดูของรางวัลและแลกคะแนนสะสม</p>
             </div>
           </button>
         )}
