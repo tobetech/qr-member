@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { useSessionGuard } from '@/lib/hooks/useSessionGuard'
+
 interface Profile {
   full_name: string
   balance: number
@@ -17,12 +18,14 @@ interface Tier {
 }
 
 export default function MenuPage() {
-  const router = useRouter()  
+  const router = useRouter()
   const supabase = createClient()
   useSessionGuard()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [tiers, setTiers] = useState<Tier[]>([])
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
+  const [rewardsEnabled, setRewardsEnabled] = useState(false)
+  const [promotionsEnabled, setPromotionsEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export default function MenuPage() {
 
       const { data: settings } = await supabase
         .from('loyalty_settings')
-        .select('is_enabled')
+        .select('is_enabled, rewards_enabled, promotions_enabled')
         .eq('id', 1)
         .single()
 
@@ -52,6 +55,8 @@ export default function MenuPage() {
           .order('sort_order')
         setTiers(tiersData || [])
       }
+      setRewardsEnabled(settings?.rewards_enabled ?? true)
+      setPromotionsEnabled(settings?.promotions_enabled ?? true)
 
       setLoading(false)
     }
@@ -175,6 +180,7 @@ export default function MenuPage() {
       </div>
 
       <div className="flex-1 px-6 py-6 space-y-3">
+        {/* สแกน QR */}
         <button
           onClick={() => {
             if ((profile?.balance || 0) <= 0) return
@@ -200,6 +206,7 @@ export default function MenuPage() {
           </div>
         </button>
 
+        {/* เติมเงิน */}
         <button
           onClick={() => router.push('/menu/topup')}
           className="w-full flex items-center gap-4 bg-white border border-gray-100 px-5 py-4 rounded-2xl active:scale-95 transition shadow-sm"
@@ -213,34 +220,57 @@ export default function MenuPage() {
           </div>
         </button>
 
+        {/* แลกคะแนน — แสดงเมื่อ loyaltyEnabled และ rewardsEnabled */}
         {loyaltyEnabled && (
           <button
-            onClick={() => router.push('/menu/rewards')}
-            className="w-full flex items-center gap-4 bg-white border border-gray-100 px-5 py-4 rounded-2xl active:scale-95 transition shadow-sm"
+            onClick={() => { if (rewardsEnabled) router.push('/menu/rewards') }}
+            disabled={!rewardsEnabled}
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition shadow-sm border ${
+              rewardsEnabled
+                ? 'bg-white border-gray-100 active:scale-95 cursor-pointer'
+                : 'bg-gray-200 border-gray-200 cursor-not-allowed opacity-60'
+            }`}
           >
-            <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center text-2xl">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+              rewardsEnabled ? 'bg-yellow-100' : 'bg-gray-300'
+            }`}>
               ⭐
             </div>
             <div className="text-left">
-              <p className="font-semibold text-lg text-gray-900">แลกคะแนนสะสม</p>
-              <p className="text-gray-400 text-sm">ดูของรางวัลและแลกคะแนนสะสม</p>
+              <p className={`font-semibold text-lg ${rewardsEnabled ? 'text-gray-900' : 'text-gray-400'}`}>แลกคะแนนสะสม</p>
+              <p className="text-gray-400 text-sm">
+                {rewardsEnabled ? 'ดูของรางวัลและแลกคะแนนสะสม' : 'ปิดให้บริการชั่วคราว'}
+              </p>
             </div>
           </button>
         )}
 
-        <button
-          onClick={() => router.push('/menu/promotions')}
-          className="w-full flex items-center gap-4 bg-white border border-gray-100 px-5 py-4 rounded-2xl active:scale-95 transition shadow-sm"
+        {/* โปรโมชั่น — แสดงเมื่อ promotionsEnabled */}
+       
+          <button
+          onClick={() => { if (promotionsEnabled) router.push('/menu/promotions') }}
+          disabled={!promotionsEnabled}
+          className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition shadow-sm border ${
+            promotionsEnabled
+              ? 'bg-white border-gray-100 active:scale-95 cursor-pointer'
+              : 'bg-gray-200 border-gray-200 cursor-not-allowed opacity-60'
+          }`}
         >
-          <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center text-2xl">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+            promotionsEnabled ? 'bg-pink-100' : 'bg-gray-300'
+          }`}>
             🎁
           </div>
           <div className="text-left">
-            <p className="font-semibold text-lg text-gray-900">โปรโมชั่น สิทธิประโยชน์</p>
-            <p className="text-gray-400 text-sm">ดูโปรโมชั่นและสิทธิประโยชน์สมาชิก</p>
+            <p className={`font-semibold text-lg ${promotionsEnabled ? 'text-gray-900' : 'text-gray-400'}`}>โปรโมชั่น สิทธิประโยชน์</p>
+            <p className="text-gray-400 text-sm">
+              {promotionsEnabled ? 'ดูโปรโมชั่นและสิทธิประโยชน์สมาชิก' : 'ปิดให้บริการชั่วคราว'}
+            </p>
           </div>
         </button>
+       
 
+        {/* ประวัติ */}
         <button
           onClick={() => router.push('/menu/history')}
           className="w-full flex items-center gap-4 bg-white border border-gray-100 px-5 py-4 rounded-2xl active:scale-95 transition shadow-sm"
